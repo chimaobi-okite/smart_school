@@ -1,0 +1,48 @@
+from fastapi import FastAPI, Form, Response, status, HTTPException, Depends, APIRouter,  File, UploadFile
+from sqlalchemy.orm import Session
+from typing import List, Optional
+from fastapi.encoders import jsonable_encoder
+
+from sqlalchemy import func
+# from sqlalchemy.sql.functions import func
+from .. import models, schemas, oauth2
+from ..database import get_db
+import pandas as pd
+import numpy as np
+
+
+router = APIRouter(
+    prefix="/submissions",
+    tags=['Submission']
+)
+
+@router.post("/", status_code=status.HTTP_201_CREATED)
+def make_submission(submissions:schemas.Submissions, 
+                    user:schemas.TokenUser=Depends(oauth2.get_current_user),
+                                                   db:Session=Depends(get_db)):
+    is_eligible = db.query(models.Assessment).join(
+        models.Enrollment, models.Assessment.course_id == models.Enrollment.course_code
+        ).filter(models.Assessment.id == submissions.assessment_id, models.Enrollment.reg_num == user.id).count() > 0
+    if not is_eligible:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    assessment_questions = db.query(models.Assessment.id, models.Question.id, models.AnswerOptions.id).join(
+        models.Question, models.Assessment.id == models.Question.assessment_id).join(
+        models.AnswerOptions, models.Question.id == models.AnswerOptions.question_id).filter(
+        models.AnswerOptions.is_correct == True).all()
+    assessment_df = pd.DataFrame.from_records(assessment_questions,
+                                                columns=['assessment_id', 'question_id', 'answeroptions_id'])
+                                                
+
+    stu_ans_df = pd.DataFrame(jsonable_encoder(submissions.submissions))
+    submission_df=assessment_df.merge(stu_ans_df, how='left')
+    submission_df.rename(columns={"answeroptions_id":"ref_answer_id"}, inplace=True)
+    submission_df.drop(columns=["assessment_id"], inplace=True)
+    responses = submission_df.to_dict('records')
+    stu_subs = []
+    for response in responses:
+        submission = models.Submission(**response,student_id=user.id)
+        stu_subs.append(submission)
+    db.add_all(stu_subs)
+    db.commit()
+    return Response(status_code=status.HTTP_201_CREATED)
+    
