@@ -25,21 +25,24 @@ def make_submission(submissions:schemas.Submissions,
         ).filter(models.Assessment.id == submissions.assessment_id, models.Enrollment.reg_num == user.id).count() > 0
     if not is_eligible:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    assessment_questions = db.query(models.Assessment.id, models.Question.id, models.AnswerOptions.id).join(
+    assessment_questions = db.query(models.Assessment.id, models.Question.id, models.Option.id).join(
         models.Question, models.Assessment.id == models.Question.assessment_id).join(
-        models.AnswerOptions, models.Question.id == models.AnswerOptions.question_id).filter(
-        models.AnswerOptions.is_correct == True).all()
+        models.Option, models.Question.id == models.Option.question_id).filter(
+        models.Option.is_correct == True, models.Assessment.id == submissions.assessment_id).all()
     assessment_df = pd.DataFrame.from_records(assessment_questions,
-                                                columns=['assessment_id', 'question_id', 'answeroptions_id'])
+                                                columns=['assessment_id', 'question_id', 'Option_id'])
                                                 
-
-    stu_ans_df = pd.DataFrame(jsonable_encoder(submissions.submissions))
-    submission_df=assessment_df.merge(stu_ans_df, how='left')
-    submission_df.rename(columns={"answeroptions_id":"ref_answer_id"}, inplace=True)
-    submission_df.drop(columns=["assessment_id"], inplace=True)
+    stu_ans_df: pd.DataFrame= pd.DataFrame(jsonable_encoder(submissions.submissions),)
+    submission_df : pd.DataFrame=assessment_df.merge(stu_ans_df, how='left', on='question_id')
+    submission_df.rename(columns={"Option_id":"ref_answer_id"}, inplace=True)
+    submission_df['stu_answer_id'].replace(np.NaN, -1, inplace=True) # to change column back to int
+    submission_df['stu_answer_id'] = submission_df['stu_answer_id'].astype(int)
+    print("here")
+    print(submission_df.stu_answer_id.values)
     responses = submission_df.to_dict('records')
     stu_subs = []
     for response in responses:
+        print(response['stu_answer_id'])
         submission = models.Submission(**response,student_id=user.id)
         stu_subs.append(submission)
     db.add_all(stu_subs)

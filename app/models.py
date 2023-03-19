@@ -1,5 +1,7 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, BigInteger, DateTime
+from typing import List
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, BigInteger, DateTime, UniqueConstraint
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped
 
 from .database import Base
 
@@ -49,11 +51,20 @@ class Assessment(Base):
     __tablename__ = "assessments"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
-    instructions = Column(String, nullable=False)
     start_date = Column(DateTime, nullable=False)
     duration = Column(Integer, nullable=False)
     total_mark = Column(Integer, nullable=False)
     course_id = Column(String, ForeignKey("courses.course_code", ondelete="CASCADE"), nullable=False)
+
+    questions = relationship("Question", backref="assessment")
+    instructions = relationship("Instruction", backref="assessment")
+
+class Instruction(Base):
+    __tablename__ = "instructions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    assessment_id = Column(Integer, ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False)
+    instruction = Column(String, nullable=False)
 
 class Question(Base):
 
@@ -63,8 +74,10 @@ class Question(Base):
     question = Column(String, nullable=False)
     mark = Column(Integer, nullable=False)
     is_multi_choice = Column(Boolean, server_default="FALSE", nullable=False)
+    answers = relationship("Option", backref="question")
 
-class AnswerOptions(Base):
+
+class Option(Base):
 
     __tablename__ = "options"
     id = Column(Integer, primary_key=True, index=True)
@@ -78,7 +91,22 @@ class Submission(Base):
     id = Column(Integer, primary_key=True, index=True)
     student_id = Column(BigInteger, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
     question_id = Column(Integer, ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
-    stu_answer = Column(String, nullable=False)
+    assessment_id = Column(Integer, ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False)
+    stu_answer = Column(String, nullable=True)
     ref_answer_id = Column(Integer, nullable=False)
+    stu_answer_id = Column(Integer, nullable=True)
+
+class Score(Base):
+
+    __tablename__ = "scores"
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(BigInteger, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    question_id = Column(Integer, ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
+    assessment_id = Column(Integer, ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False)
+    score = Column(Integer, nullable=False)
+
+    __table_args__ = (UniqueConstraint('assessment_id','student_id', 'question_id', name='_assessment_student_question_uc'),
+                     )
+
 
     

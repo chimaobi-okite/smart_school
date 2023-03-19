@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 @router.post("/",)
-def create_options(answers:schemas.AnswerOption, user:schemas.TokenUser=Depends(oauth2.get_current_user),
+def create_options(answers:schemas.Options, user:schemas.TokenUser=Depends(oauth2.get_current_user),
                     db:Session=Depends(get_db)):
     question = db.query(models.Question).filter(models.Question.id == answers.question_id).first()
     if not question:
@@ -30,7 +30,7 @@ def create_options(answers:schemas.AnswerOption, user:schemas.TokenUser=Depends(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     options = []
     for option in answers.options:
-        new_option = models.AnswerOptions(**option.dict(), question_id=answers.question_id)
+        new_option = models.Option(**option.dict(), question_id=answers.question_id)
         options.append(new_option)
     db.add_all(options)
     db.commit()
@@ -39,15 +39,15 @@ def create_options(answers:schemas.AnswerOption, user:schemas.TokenUser=Depends(
 @router.put("/{id}",)
 def update_option(id: int,option:schemas.Option, user:schemas.TokenUser=Depends(oauth2.get_current_user),
                     db:Session=Depends(get_db)):
-    answer_query = db.query(models.AnswerOptions).filter(models.AnswerOptions.id == id)
+    answer_query = db.query(models.Option).filter(models.Option.id == id)
     if not answer_query.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="answer not found")
-    instructor = db.query(models.AnswerOptions).join(
-        models.Question,models.AnswerOptions.question_id == models.Question.id).join(
+    instructor = db.query(models.rOption).join(
+        models.Question,models.Option.question_id == models.Question.id).join(
         models.Assessment, models.Question.assessment_id == models.Assessment.id).join(
         models.CourseInstructor, models.Assessment.course_id == models.CourseInstructor.course_code
-    ).filter(models.AnswerOptions.id == id, 
+    ).filter(models.Option.id == id, 
              models.CourseInstructor.instructor_id == user.id,
              models.CourseInstructor.is_accepted == True).first()
     if not instructor:
@@ -59,15 +59,15 @@ def update_option(id: int,option:schemas.Option, user:schemas.TokenUser=Depends(
 @router.delete("/{id}",status_code=status.HTTP_204_NO_CONTENT)
 def delete_option(id: int, user:schemas.TokenUser=Depends(oauth2.get_current_user),
                     db:Session=Depends(get_db)):
-    answer_query = db.query(models.AnswerOptions).filter(models.AnswerOptions.id == id)
+    answer_query = db.query(models.Option).filter(models.Option.id == id)
     if not answer_query.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="answer not found")
-    instructor = db.query(models.AnswerOptions).join(
-        models.Question,models.AnswerOptions.question_id == models.Question.id).join(
+    instructor = db.query(models.Option).join(
+        models.Question,models.Option.question_id == models.Question.id).join(
         models.Assessment, models.Question.assessment_id == models.Assessment.id).join(
         models.CourseInstructor, models.Assessment.course_id == models.CourseInstructor.course_code
-    ).filter(models.AnswerOptions.id == id, 
+    ).filter(models.Option.id == id, 
              models.CourseInstructor.instructor_id == user.id,
              models.CourseInstructor.is_accepted == True).first()
     if not instructor:
