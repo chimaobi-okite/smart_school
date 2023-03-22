@@ -48,4 +48,3 @@ def make_submission(submissions:schemas.Submissions,
     db.add_all(stu_subs)
     db.commit()
     return Response(status_code=status.HTTP_201_CREATED)
-    

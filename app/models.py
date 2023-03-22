@@ -1,5 +1,5 @@
 from typing import List
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, BigInteger, DateTime, UniqueConstraint
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, BigInteger, DateTime, UniqueConstraint, CheckConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import Mapped
 
@@ -52,6 +52,7 @@ class Assessment(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=True)
     duration = Column(Integer, nullable=False)
     total_mark = Column(Integer, nullable=False)
     course_id = Column(String, ForeignKey("courses.course_code", ondelete="CASCADE"), nullable=False)
@@ -73,7 +74,10 @@ class Question(Base):
     assessment_id = Column(Integer, ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False)
     question = Column(String, nullable=False)
     mark = Column(Integer, nullable=False)
-    is_multi_choice = Column(Boolean, server_default="FALSE", nullable=False)
+    # is_multi_choice = Column(Boolean, server_default="FALSE", nullable=False)
+    question_type = Column(String, nullable=False)
+    
+    __table_args__ = (CheckConstraint(question_type.in_(['multi_choice', 'list_type', 'others'])), )
     answers = relationship("Option", backref="question")
 
 

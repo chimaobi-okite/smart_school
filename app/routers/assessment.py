@@ -16,7 +16,7 @@ router = APIRouter(
     tags=['Assessments']
 )
 
-@router.post("/", response_model=schemas.AssessmentReview)
+@router.post("/", response_model=schemas.AssessmentOut)
 def create_assessment(assessment:schemas.Assessment, db:Session=Depends(get_db),
                         user:schemas.TokenUser = Depends(oauth2.get_current_user)):
     instructor = db.query(models.CourseInstructor).filter(
@@ -27,10 +27,6 @@ def create_assessment(assessment:schemas.Assessment, db:Session=Depends(get_db),
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Access denied")
     
     # only create assessment two hours into the future
-    current_time = datetime.now()
-    if assessment.start_date < (current_time + timedelta(minutes=20)):
-        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
-                            detail="can only create an assignment to start at a time 1 hour ahead of {current_time}")
     new_assessment = models.Assessment(**assessment.dict())
     db.add(new_assessment)
     db.commit()
@@ -57,9 +53,6 @@ def update_assessment(updated_assessment:schemas.Assessment,id:int, db:Session=D
     if assessment_detail.start_date < (current_time + timedelta(minutes=20)):
         raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
                             detail="cannot update already started, ended assessments or update 15 minutes before start time")
-    if updated_assessment.start_date < (current_time + timedelta(minutes=20)):
-        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
-                            detail=f"can only update an assignment to start at a time 1 hour ahead of {current_time}")
     assessment_query.update(updated_assessment.dict(), synchronize_session=False)
     db.commit()
     db.refresh(assessment_query.first())
