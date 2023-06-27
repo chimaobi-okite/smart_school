@@ -29,9 +29,9 @@ def create_question(question:schemas.Question, user:schemas.TokenUser=Depends(oa
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="assessment not found")
     current_time = datetime.now()
-    if (assessment.start_date <= current_time):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="cannot add questions to already started assessment")
+    # if (assessment.start_date <= current_time):
+    #     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+    #                         detail="cannot add questions to already started assessment")
     new_question = models.Question(**question.dict())
     db.add(new_question)
     db.commit()
@@ -56,9 +56,9 @@ def update_question(id:int, updated_question:schemas.QuestionUpdate, user:schema
                             detail="question not found")
     assessment = db.query(models.Assessment).filter(models.Assessment.id == question.assessment_id).first()
     current_time = datetime.now()
-    if (assessment.start_date <= current_time):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="cannot add questions to already started assessment")
+    # if (assessment.start_date <= current_time):
+    #     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+    #                         detail="cannot add questions to already started assessment")
     question_query.update(updated_question.dict(), synchronize_session=False)
     db.commit()
     db.refresh(question_query.first())

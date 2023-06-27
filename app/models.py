@@ -1,5 +1,5 @@
 from typing import List
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, BigInteger, DateTime, UniqueConstraint, CheckConstraint
+from sqlalchemy import Boolean, Column, Float, ForeignKey, Integer, String, BigInteger, DateTime, UniqueConstraint, CheckConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import Mapped
 
@@ -11,16 +11,26 @@ class Student(Base):
 
     id = Column(BigInteger, primary_key=True)
     name = Column(String, nullable=False)
+    faculty = Column(String, nullable=False)
+    department = Column(String(3), nullable=False)
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
+    major = Column(String, nullable=True)
+    bio = Column(String, nullable=True)
+    photo_url = Column(String, nullable=True)
 
 class Instructor(Base):
     __tablename__ = "instructors"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
+    faculty = Column(String, nullable=False)
+    department = Column(String(3), nullable=False)
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
+    major = Column(String, nullable=True)
+    bio = Column(String, nullable=True)
+    photo_url = Column(String, nullable=True)
 
 class Course(Base):
     __tablename__ = "courses"
@@ -29,6 +39,10 @@ class Course(Base):
     title = Column(String, nullable=False)
     description = Column(String, nullable=False)
     units = Column(Integer, nullable=False)
+    faculty = Column(String, nullable=False)
+    semester = Column(Integer, nullable=False)
+    level = Column(Integer, nullable=False)
+    course_photo_url = Column(String, nullable=True)
 
 class Enrollment(Base):
     __tablename__ = "enrollments"
@@ -74,10 +88,12 @@ class Question(Base):
     assessment_id = Column(Integer, ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False)
     question = Column(String, nullable=False)
     mark = Column(Integer, nullable=False)
-    # is_multi_choice = Column(Boolean, server_default="FALSE", nullable=False)
+    is_multi_choice = Column(Boolean, server_default="FALSE", nullable=False)
     question_type = Column(String, nullable=False)
+    tolerance = Column(Float, nullable=True)
+    num_answer = Column(Integer, nullable=True)
     
-    __table_args__ = (CheckConstraint(question_type.in_(['multi_choice', 'list_type', 'others'])), )
+    __table_args__ = (CheckConstraint(question_type.in_(['obj', 'sub_obj', 'nlp', 'maths'])), )
     answers = relationship("Option", backref="question")
 
 
@@ -97,7 +113,7 @@ class Submission(Base):
     question_id = Column(Integer, ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
     assessment_id = Column(Integer, ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False)
     stu_answer = Column(String, nullable=True)
-    ref_answer_id = Column(Integer, nullable=False)
+    # ref_answer_id = Column(Integer, nullable=False)
     stu_answer_id = Column(Integer, nullable=True)
 
 class Score(Base):

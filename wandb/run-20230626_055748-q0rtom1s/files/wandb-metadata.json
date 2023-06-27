@@ -1,0 +1,44 @@
+{
+    "os": "Windows-10-10.0.19042-SP0",
+    "python": "3.10.10",
+    "heartbeatAt": "2023-06-26T04:57:50.352916",
+    "startedAt": "2023-06-26T04:57:48.360592",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "app.main:app",
+        "--reload"
+    ],
+    "state": "running",
+    "program": "<python with no main file>",
+    "git": {
+        "remote": "https://github.com/chimaobi-okite/smart_school.git",
+        "commit": "c90405dc7a0ce28f90a2ea07beeddf5ec39cb5e1"
+    },
+    "email": "okitesamuel28@gmail.com",
+    "root": "C:/Users/Chimaobi Okite/Desktop/SmartSchool",
+    "host": "DESKTOP-8IM1197",
+    "username": "Chimaobi Okite",
+    "executable": "C:\\Users\\Chimaobi Okite\\Desktop\\SmartSchool\\.venv\\Scripts\\python.exe",
+    "cpu_count": 2,
+    "cpu_count_logical": 4,
+    "cpu_freq": {
+        "current": 2200.0,
+        "min": 0.0,
+        "max": 2200.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2200.0,
+            "min": 0.0,
+            "max": 2200.0
+        }
+    ],
+    "disk": {
+        "total": 465.21475982666016,
+        "used": 60.66696548461914
+    },
+    "memory": {
+        "total": 3.5872344970703125
+    }
+}

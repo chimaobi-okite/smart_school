@@ -1,6 +1,6 @@
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, EmailStr, StrictInt, ValidationError, validator
+from pydantic import BaseModel, EmailStr, StrictInt, ValidationError, conint, validator, constr
 from datetime import timedelta, datetime
 
 
@@ -9,6 +9,18 @@ class Course(BaseModel):
     title: str
     description: str
     units: int
+    faculty:str
+    semester:conint(le=2, ge=1)
+    level:int
+
+    class Config:
+        orm_mode = True
+
+class CourseOut(Course):
+    course_photo_url: Optional[str] = None
+
+class Faculty(BaseModel):
+    faculties:List[str]
 
     class Config:
         orm_mode = True
@@ -16,6 +28,11 @@ class Course(BaseModel):
 class User(BaseModel):
     name: str
     email : EmailStr
+    department: constr(max_length=3, min_length=3)
+    faculty: str
+    major : Optional[str] = None
+    bio :Optional[str] =None
+
 
 class UserCreate(User):
     password : str
@@ -23,6 +40,7 @@ class UserCreate(User):
 
 class UserOut(User):
     id : int
+    photo_url: Optional[str] = str
 
     class Config:
         orm_mode = True
@@ -68,19 +86,19 @@ class Assessment(BaseModel):
     course_id:str
     end_date: Optional[datetime] = None
 
-    @validator('start_date')
-    def check_start(cls, v):
-        current_time = datetime.now()
-        if v < (current_time + timedelta(minutes=20)):
-                raise ValueError('assessment should be created or updated atleast an hour before the test')
-        return v
+    # @validator('start_date')
+    # def check_start(cls, v):
+    #     current_time = datetime.now()
+    #     if v < (current_time + timedelta(minutes=20)):
+    #             raise ValueError('assessment should be created or updated atleast an hour before the test')
+    #     return v
     
-    @validator('end_date')
-    def dates_check(cls, v, values, **kwargs):
-        if v != None:
-            if 'start_date' in values and v <= values['start_date']:
-                raise ValueError('end_date should be greater than start_date')
-        return v
+    # @validator('end_date')
+    # def dates_check(cls, v, values, **kwargs):
+    #     if v != None:
+    #         if 'start_date' in values and v <= values['start_date']:
+    #             raise ValueError('end_date should be greater than start_date')
+    #     return v
 
 class AssessmentOut(Assessment):
     id:int
@@ -105,13 +123,19 @@ class InstructionOut(Instruction):
 class Question(BaseModel):
     question:str
     mark:int
-    question_type:Literal['multi_choice', 'list_type', 'others']
+    question_type:Literal['obj', 'sub_obj', 'nlp', 'maths']
+    tolerance:Optional[int] = None
+    is_multi_choice:bool
+    num_answer:Optional[int] = None
     assessment_id:int
 
 class QuestionUpdate(BaseModel):
     question:str
     mark:int
-    question_type:Literal['multi_choice', 'list_type', 'others']
+    question_type:Literal['obj', 'sub_obj', 'nlp', 'maths']
+    tolerance:Optional[float] = None
+    num_answer:Optional[int] = None
+    is_multi_choice:bool
 
 class QuestionOut(Question):
     id:int

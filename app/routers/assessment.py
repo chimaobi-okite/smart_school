@@ -110,10 +110,6 @@ def review_assessment(id:int, db:Session=Depends(get_db),
         joinedload(models.Assessment.questions, models.Question.answers)).filter(
         models.Assessment.id == id).first()
     print(assessment)
-
-    if not assessment:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail=f"assessment with id -> {id} not found")
     return assessment
 
 @router.get("/{id}/questions",response_model=schemas.AssessmentQuestion)
@@ -150,9 +146,6 @@ def get_assessment_questions(id:int, db:Session=Depends(get_db),
         models.Assessment.id == id).first()
     print(assessment)
 
-    if not assessment:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail=f"assessment with id -> {id} not found")
     return assessment
 
 @router.get("/{id}", response_model=schemas.AssessmentOut)
@@ -176,3 +169,27 @@ def get_assessment(id:int, db:Session=Depends(get_db),
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"assessment with id -> {id} not found")
     return assessment
+
+@router.get("/{id}/results")
+def get_assessment_resultss(id:int, db:Session=Depends(get_db),
+                    user:schemas.TokenUser = Depends(oauth2.get_current_user)):
+    if user.is_instructor:
+        instructor = db.query(models.Assessment).join(
+            models.CourseInstructor, models.Assessment.course_id == models.CourseInstructor.course_code
+        ).filter(models.CourseInstructor.instructor_id == user.id, models.Assessment.id == id,
+                    models.CourseInstructor.is_accepted == True).first()
+        if not instructor:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    if not user.is_instructor:
+        student = db.query(models.Assessment).join(
+            models.Enrollment, models.Assessment.course_id == models.Enrollment.course_code
+        ).filter(models.Enrollment.reg_num == user.id, models.Assessment.id == id).first()
+        if not student:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        
+    # total_subquery= db.query(models.Score.student_id, func.sum(models.Score.score)).group_by(
+    #     models.Score.assessment_id,models.Score.student_id).filter(
+    #     models.Score.assessment_id == id
+    #     ).subquery()
+    # query = db.query(models.Student.id, models.Student.name, models.Student.photo_url)
+    # query = query.ou
