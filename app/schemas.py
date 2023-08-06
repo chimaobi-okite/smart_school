@@ -38,9 +38,21 @@ class UserCreate(User):
     password : str
     id : Optional[int] = None
 
+class UserPassword(BaseModel):
+    email : EmailStr
+    old_password : str
+    new_password : str
+    confirm_password : str
+
+    @validator('confirm_password')
+    def passwords_match(cls, v, values, **kwargs):
+        if 'new_password' in values and v != values['new_password']:
+            raise ValueError('passwords do not match')
+        return v
+
 class UserOut(User):
     id : int
-    photo_url: Optional[str] = str
+    photo_url: Optional[str]
 
     class Config:
         orm_mode = True
@@ -84,6 +96,7 @@ class Assessment(BaseModel):
     duration:int
     total_mark:int
     course_id:str
+    is_active:bool
     end_date: Optional[datetime] = None
 
     # @validator('start_date')
@@ -124,7 +137,7 @@ class Question(BaseModel):
     question:str
     mark:int
     question_type:Literal['obj', 'sub_obj', 'nlp', 'maths']
-    tolerance:Optional[int] = None
+    tolerance:Optional[float] = None
     is_multi_choice:bool
     num_answer:Optional[int] = None
     assessment_id:int

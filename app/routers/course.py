@@ -1,4 +1,5 @@
 import os
+import cloudinary.uploader
 from fastapi import FastAPI, File, Response, UploadFile, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -47,11 +48,9 @@ async def upload_photo(code:str, file: UploadFile = File(...),
     if not instructor:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Access denied")
     course_query = db.query(models.Course).filter(models.Course.course_code ==code)   
-    photo_loc = os.path.join(config.PHOTO_DIR, "courses", code)
-    with open(f'{photo_loc}','wb') as image:
-        image.write(file.file.read())
-        image.close()
-    course_query.update({"course_photo_url":photo_loc}, synchronize_session=False)
+    response = cloudinary.uploader.upload(file.file)
+    image_url = response.get("secure_url")
+    course_query.update({"course_photo_url":image_url}, synchronize_session=False)
     db.commit()
     return course_query.first()
 

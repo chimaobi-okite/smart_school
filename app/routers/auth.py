@@ -16,7 +16,8 @@ def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session =
         user = db.query(models.Instructor).filter(
             models.Instructor.email == user_credentials.username).first()
         if not user:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Invalid Credentials")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail=f"Invalid Credentials")
         is_instructor = True
     if not utils.verify(user_credentials.password, user.password):
         raise HTTPException(
@@ -25,6 +26,7 @@ def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session =
     # create a token
     # return token
 
-    access_token = oauth2.create_access_token(data={"user_id": user.id, "is_instructor":is_instructor})
+    access_token = oauth2.create_access_token(
+        data={"user_id": user.id, "is_instructor": is_instructor})
 
     return {"access_token": access_token, "token_type": "bearer"}

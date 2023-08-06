@@ -2,11 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi import FastAPI
+import cloudinary.uploader
 from fastapi.middleware.cors import CORSMiddleware
+
+from app import config
 
 from . import models
 from .database import engine
-from .routers import course, user, auth, student,instructor, assessment, question, answer, submission, instruction,mark
+from .routers import course, user, auth, student, instructor, assessment, question, answer, submission, instruction, mark
 # from .config import settings
 
 
@@ -14,7 +17,11 @@ from .routers import course, user, auth, student,instructor, assessment, questio
 
 app = FastAPI()
 
-
+cloudinary.config(
+    cloud_name=config.settings.cloud_api_name,
+    api_key=config.settings.cloud_api_key,
+    api_secret=config.settings.cloud_api_secret
+)
 
 app.include_router(course.router)
 app.include_router(user.router)
