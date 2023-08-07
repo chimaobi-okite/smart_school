@@ -107,8 +107,8 @@ class Question(Base):
     tolerance = Column(Float, nullable=True)
     num_answer = Column(Integer, nullable=True)
 
-    __table_args__ = (CheckConstraint(
-        question_type.in_(['obj', 'sub_obj', 'nlp', 'maths'])), )
+    # __table_args__ = (CheckConstraint(
+    #     question_type.in_(['obj', 'sub_obj', 'nlp', 'maths'])), )
     answers = relationship("Option", backref="question")
 
 
