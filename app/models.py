@@ -77,12 +77,14 @@ class Assessment(Base):
     end_date = Column(DateTime, nullable=True)
     duration = Column(Integer, nullable=False)
     total_mark = Column(Integer, nullable=False)
+    assessment_type = Column(String, nullable=True)
     is_active = Column(Boolean, server_default="FALSE", nullable=False)
     course_id = Column(String, ForeignKey(
         "courses.course_code", ondelete="CASCADE"), nullable=False)
 
     questions = relationship("Question", backref="assessment")
     instructions = relationship("Instruction", backref="assessment")
+    totals = relationship("Total", backref="assessment")
 
 
 class Instruction(Base):
@@ -147,7 +149,21 @@ class Score(Base):
         "questions.id", ondelete="CASCADE"), nullable=False)
     assessment_id = Column(Integer, ForeignKey(
         "assessments.id", ondelete="CASCADE"), nullable=False)
-    score = Column(Integer, nullable=False)
+    score = Column(Float, nullable=False)
 
     __table_args__ = (UniqueConstraint('assessment_id', 'student_id', 'question_id', name='_assessment_student_question_uc'),
+                      )
+
+
+class Total(Base):
+
+    __tablename__ = "totals"
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(BigInteger, ForeignKey(
+        "students.id", ondelete="CASCADE"), nullable=False)
+    assessment_id = Column(Integer, ForeignKey(
+        "assessments.id", ondelete="CASCADE"), nullable=False)
+    total = Column(Float, nullable=False)
+
+    __table_args__ = (UniqueConstraint('assessment_id', 'student_id', name='_assessment_student_uc'),
                       )

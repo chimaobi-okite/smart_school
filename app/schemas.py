@@ -97,6 +97,7 @@ class Assessment(BaseModel):
     total_mark:int
     course_id:str
     is_active:bool
+    assessment_type:Literal['Assignment', 'Test', 'Exam']
     end_date: Optional[datetime] = None
 
     # @validator('start_date')
@@ -198,6 +199,15 @@ class AssessmentQuestion(Assessment):
     id:int
     questions: Optional[List[QuestionOut]] = None
     instructions : Optional[List[InstructionOut]] = None
+
+    class Config:
+        orm_mode = True
+
+class AssessmentResults(BaseModel):
+    name:str
+    student_id:int
+    total:float
+    photo_url:str = None
 
     class Config:
         orm_mode = True
