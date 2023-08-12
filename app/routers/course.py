@@ -86,6 +86,28 @@ def get_courses(db:Session=Depends(get_db),
     return courses_query.all()
 
 
+@router.get("/enrollments", response_model=List[schemas.CourseOut])
+def get_enrollments(db:Session=Depends(get_db),
+                user: schemas.TokenUser = Depends(oauth2.get_current_user),semester: int = 1,
+                title: Optional[str] = None, faculty: Optional[str] = None, level: Optional[int] = None, ):
+    if user.is_instructor:
+        courses_query = db.query(models.Course).join(models.CourseInstructor,
+                                                     models.Course.course_code == 
+                                                     models.CourseInstructor.course_code).filter(
+            models.CourseInstructor.instructor_id == int(user.id), models.Course.semester == semester)
+    if not user.is_instructor:
+        courses_query = db.query(models.Course).join(models.Enrollment,
+                                                     models.Course.course_code == 
+                                                     models.Enrollment.course_code).filter(
+            models.Enrollment.reg_num == int(user.id), models.Course.semester == semester)
+    if title:
+        courses_query = courses_query.filter(models.Course.title.contains(title))
+    if faculty:
+        courses_query = courses_query.filter(models.Course.faculty == faculty)
+    if level:
+        courses_query = courses_query.filter(models.Course.level == level)
+    return courses_query.all()
+
 @router.get("/faculties", response_model=schemas.Faculty)
 def get_faculties(db:Session=Depends(get_db),user: schemas.TokenUser = Depends(oauth2.get_current_user)):
     faculties = db.query(models.Course.faculty).distinct().all()
