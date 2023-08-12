@@ -75,7 +75,8 @@ def update_course(code:str, new_course:schemas.Course,
 @router.get("/", response_model=List[schemas.CourseOut])
 def get_courses(db:Session=Depends(get_db),
                 user: schemas.TokenUser = Depends(oauth2.get_current_user),semester: int = 1,
-                title: Optional[str] = None, faculty: Optional[str] = None, level: Optional[int] = None, ):
+                title: Optional[str] = None, faculty: Optional[str] = None, level: Optional[int] = None,
+                 skip: int = 0, limit: int = 10  ):
     courses_query = db.query(models.Course).filter(models.Course.semester == semester)
     if title:
         courses_query = courses_query.filter(models.Course.title.contains(title))
@@ -83,13 +84,15 @@ def get_courses(db:Session=Depends(get_db),
         courses_query = courses_query.filter(models.Course.faculty == faculty)
     if level:
         courses_query = courses_query.filter(models.Course.level == level)
+    courses_query.limit(limit).offset(skip*limit)
     return courses_query.all()
 
 
 @router.get("/enrollments", response_model=List[schemas.CourseOut])
 def get_enrollments(db:Session=Depends(get_db),
                 user: schemas.TokenUser = Depends(oauth2.get_current_user),semester: int = 1,
-                title: Optional[str] = None, faculty: Optional[str] = None, level: Optional[int] = None, ):
+                title: Optional[str] = None, faculty: Optional[str] = None, level: Optional[int] = None,
+                skip: int = 0, limit: int = 10 ):
     if user.is_instructor:
         courses_query = db.query(models.Course).join(models.CourseInstructor,
                                                      models.Course.course_code == 
@@ -106,6 +109,7 @@ def get_enrollments(db:Session=Depends(get_db),
         courses_query = courses_query.filter(models.Course.faculty == faculty)
     if level:
         courses_query = courses_query.filter(models.Course.level == level)
+    courses_query.limit(limit).offset(skip*limit)
     return courses_query.all()
 
 @router.get("/faculties", response_model=schemas.Faculty)
