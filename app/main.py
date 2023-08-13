@@ -14,7 +14,7 @@ from .routers import course, user, auth, student, instructor, assessment, questi
 # from .config import settings
 
 
-models.Base.metadata.create_all(bind=engine)
+# models.Base.metadata.create_all(bind=engine)
 
 origins = [
     "http://localhost.tiangolo.com",

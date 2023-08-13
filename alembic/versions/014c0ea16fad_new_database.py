@@ -1,8 +1,8 @@
-"""generate all tables
+"""new database
 
-Revision ID: a4e0efc75da1
+Revision ID: 014c0ea16fad
 Revises: 
-Create Date: 2023-03-18 18:29:11.476819
+Create Date: 2023-08-13 08:05:31.028164
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'a4e0efc75da1'
+revision = '014c0ea16fad'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -23,14 +23,23 @@ def upgrade() -> None:
     sa.Column('title', sa.String(), nullable=False),
     sa.Column('description', sa.String(), nullable=False),
     sa.Column('units', sa.Integer(), nullable=False),
+    sa.Column('faculty', sa.String(), nullable=False),
+    sa.Column('semester', sa.Integer(), nullable=False),
+    sa.Column('level', sa.Integer(), nullable=False),
+    sa.Column('course_photo_url', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('course_code')
     )
     op.create_index(op.f('ix_courses_course_code'), 'courses', ['course_code'], unique=False)
     op.create_table('instructors',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
+    sa.Column('faculty', sa.String(), nullable=False),
+    sa.Column('department', sa.String(length=3), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('password', sa.String(), nullable=False),
+    sa.Column('major', sa.String(), nullable=True),
+    sa.Column('bio', sa.String(), nullable=True),
+    sa.Column('photo_url', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
@@ -38,8 +47,13 @@ def upgrade() -> None:
     op.create_table('students',
     sa.Column('id', sa.BigInteger(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
+    sa.Column('faculty', sa.String(), nullable=False),
+    sa.Column('department', sa.String(length=3), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('password', sa.String(), nullable=False),
+    sa.Column('major', sa.String(), nullable=True),
+    sa.Column('bio', sa.String(), nullable=True),
+    sa.Column('photo_url', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
@@ -47,8 +61,11 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('title', sa.String(), nullable=False),
     sa.Column('start_date', sa.DateTime(), nullable=False),
+    sa.Column('end_date', sa.DateTime(), nullable=True),
     sa.Column('duration', sa.Integer(), nullable=False),
     sa.Column('total_mark', sa.Integer(), nullable=False),
+    sa.Column('assessment_type', sa.String(), nullable=True),
+    sa.Column('is_active', sa.Boolean(), server_default='FALSE', nullable=False),
     sa.Column('course_id', sa.String(), nullable=False),
     sa.ForeignKeyConstraint(['course_id'], ['courses.course_code'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
@@ -86,10 +103,24 @@ def upgrade() -> None:
     sa.Column('question', sa.String(), nullable=False),
     sa.Column('mark', sa.Integer(), nullable=False),
     sa.Column('is_multi_choice', sa.Boolean(), server_default='FALSE', nullable=False),
+    sa.Column('question_type', sa.String(), nullable=False),
+    sa.Column('tolerance', sa.Float(), nullable=True),
+    sa.Column('num_answer', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['assessment_id'], ['assessments.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_questions_id'), 'questions', ['id'], unique=False)
+    op.create_table('totals',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('student_id', sa.BigInteger(), nullable=False),
+    sa.Column('assessment_id', sa.Integer(), nullable=False),
+    sa.Column('total', sa.Float(), nullable=False),
+    sa.ForeignKeyConstraint(['assessment_id'], ['assessments.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['student_id'], ['students.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('assessment_id', 'student_id', name='_assessment_student_uc')
+    )
+    op.create_index(op.f('ix_totals_id'), 'totals', ['id'], unique=False)
     op.create_table('options',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('question_id', sa.Integer(), nullable=False),
@@ -104,7 +135,7 @@ def upgrade() -> None:
     sa.Column('student_id', sa.BigInteger(), nullable=False),
     sa.Column('question_id', sa.Integer(), nullable=False),
     sa.Column('assessment_id', sa.Integer(), nullable=False),
-    sa.Column('score', sa.Integer(), nullable=False),
+    sa.Column('score', sa.Float(), nullable=False),
     sa.ForeignKeyConstraint(['assessment_id'], ['assessments.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['question_id'], ['questions.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['student_id'], ['students.id'], ondelete='CASCADE'),
@@ -118,7 +149,6 @@ def upgrade() -> None:
     sa.Column('question_id', sa.Integer(), nullable=False),
     sa.Column('assessment_id', sa.Integer(), nullable=False),
     sa.Column('stu_answer', sa.String(), nullable=True),
-    sa.Column('ref_answer_id', sa.Integer(), nullable=False),
     sa.Column('stu_answer_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['assessment_id'], ['assessments.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['question_id'], ['questions.id'], ondelete='CASCADE'),
@@ -137,6 +167,8 @@ def downgrade() -> None:
     op.drop_table('scores')
     op.drop_index(op.f('ix_options_id'), table_name='options')
     op.drop_table('options')
+    op.drop_index(op.f('ix_totals_id'), table_name='totals')
+    op.drop_table('totals')
     op.drop_index(op.f('ix_questions_id'), table_name='questions')
     op.drop_table('questions')
     op.drop_index(op.f('ix_instructions_id'), table_name='instructions')
