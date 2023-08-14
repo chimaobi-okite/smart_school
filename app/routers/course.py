@@ -144,7 +144,7 @@ def get_courses(code: str, db: Session = Depends(get_db), user: schemas.TokenUse
 
 
 @router.get("/{code}/assessments", response_model=List[schemas.AssessmentOut])
-def get_all_assessment(code: str, is_active: bool = None, is_ended: bool = None, db: Session = Depends(get_db),
+def get_all_assessment(code: str, is_active: bool = None, db: Session = Depends(get_db),
                        user: schemas.TokenUser = Depends(oauth2.get_current_user)):
     if user.is_instructor:
         instructor = db.query(models.CourseInstructor).filter(
@@ -164,9 +164,9 @@ def get_all_assessment(code: str, is_active: bool = None, is_ended: bool = None,
     if is_active != None:
         assessment = assessment_query.filter(
             models.Assessment.is_active == is_active, models.Assessment.end_date > current_time).all()
-    if is_ended == True:
-        assessment = assessment_query.filter(
-            models.Assessment.end_date < current_time).all()
+    # if is_ended == True:
+    #     assessment = assessment_query.filter(
+    #         models.Assessment.end_date < current_time).all()
     else:
         assessment = assessment_query.all()
     return assessment
