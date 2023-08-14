@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from sqlalchemy.orm import joinedload, subqueryload, contains_eager
@@ -123,6 +124,49 @@ def review_assessment(id: int, db: Session = Depends(get_db),
         models.Assessment.id == id).first()
     print(assessment)
     return assessment
+
+
+@router.get("/{id}/assessment_questions", response_model=schemas.AssessmentReview)
+def review_assessment(id: int, db: Session = Depends(get_db),
+                      user: schemas.TokenUser = Depends(oauth2.get_current_user)):
+    assessment_query = db.query(models.Assessment).filter(
+        models.Assessment.id == id)
+    assessment_detail = assessment_query.first()
+    if not assessment_detail:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"assessment with id -> {id} not found")
+    if user.is_instructor:
+        instructor = db.query(models.Assessment).join(
+            models.CourseInstructor, models.Assessment.course_id == models.CourseInstructor.course_code
+        ).filter(models.CourseInstructor.instructor_id == user.id, models.Assessment.id == id,
+                 models.CourseInstructor.is_accepted == True).first()
+        if not instructor:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    if not user.is_instructor:
+        student = db.query(models.Assessment).join(
+            models.Enrollment, models.Assessment.course_id == models.Enrollment.course_code
+        ).filter(models.Enrollment.reg_num == user.id, models.Assessment.id == id).first()
+        if not student:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        # only review after some hours
+        current_time = datetime.now()
+        review_after = assessment_detail.start_date + \
+            assessment_detail.duration + timedelta(hours=settings.review_after)
+        if review_after < current_time:
+            raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+                                detail="can only create an assignment to start at a time 1 hour ahead of {current_time}")
+
+    assessment = db.query(models.Assessment).options(
+        joinedload(models.Assessment.instructions)).options(
+        joinedload(models.Assessment.questions)).options(
+        joinedload(models.Assessment.questions, models.Question.answers)).filter(
+        models.Assessment.id == id).first()
+    print(assessment)
+    assessment_dict = jsonable_encoder(assessment)
+    for i, question in enumerate(assessment_dict['questions']):
+        if not question['question_type'] == 'obj':
+            assessment_dict['questions'][i]['answers'] = []
+    return assessment_dict
 
 
 @router.get("/{id}/questions", response_model=schemas.AssessmentQuestion)
