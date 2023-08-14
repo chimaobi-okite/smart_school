@@ -148,13 +148,13 @@ def review_assessment(id: int, db: Session = Depends(get_db),
         ).filter(models.Enrollment.reg_num == user.id, models.Assessment.id == id).first()
         if not student:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-        # only review after some hours
+        # # only review after some hours
         current_time = datetime.now()
-        review_after = assessment_detail.start_date + \
-            assessment_detail.duration + timedelta(hours=settings.review_after)
-        if review_after < current_time:
-            raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
-                                detail="can only create an assignment to start at a time 1 hour ahead of {current_time}")
+
+        # end_time = assessment_detail.duration + assessment_detail.start_date
+        # if (assessment_detail.start_date < current_time) or (end_time < current_time):
+        #     raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+        #                         detail="can only create an assignment to start at a time 1 hour ahead of {current_time}")
 
     assessment = db.query(models.Assessment).options(
         joinedload(models.Assessment.instructions)).options(
@@ -248,9 +248,11 @@ def get_assessment_results(id: int, db: Session = Depends(get_db),
         if not student:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    total = db.query(models.Total.student_id, models.Total.total, models.Student.name,
-                     models.Student.photo_url).join(models.Student,
-                                                    models.Total.student_id == models.Student.id).filter(
+    total = db.query(models.Enrollment.reg_num, models.Total.total, models.Student.name,
+                     models.Student.photo_url).join(
+        models.Total, models.Enrollment.reg_num == models.Total.student_id,).join(models.Student,
+                                                                                  models.Total.student_id == models.Student.id).filter(
         models.Total.assessment_id == id
-    ).all()
+    )
+    print(total)
     return total
