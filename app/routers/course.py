@@ -8,6 +8,7 @@ from sqlalchemy import func
 
 from app import config
 # from sqlalchemy.sql.functions import func
+from datetime import timedelta, datetime
 from .. import models, schemas, oauth2
 from ..database import get_db
 
@@ -143,7 +144,7 @@ def get_courses(code: str, db: Session = Depends(get_db), user: schemas.TokenUse
 
 
 @router.get("/{code}/assessments", response_model=List[schemas.AssessmentOut])
-def get_all_assessment(code: str, is_active: bool = None, db: Session = Depends(get_db),
+def get_all_assessment(code: str, is_active: bool = None, is_ended: bool = None, db: Session = Depends(get_db),
                        user: schemas.TokenUser = Depends(oauth2.get_current_user)):
     if user.is_instructor:
         instructor = db.query(models.CourseInstructor).filter(
@@ -159,9 +160,13 @@ def get_all_assessment(code: str, is_active: bool = None, db: Session = Depends(
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     assessment_query = db.query(models.Assessment).filter(
         models.Assessment.course_id == code)
+    current_time = datetime.now()
     if is_active != None:
         assessment = assessment_query.filter(
-            models.Assessment.is_active == is_active).all()
+            models.Assessment.is_active == is_active, models.Assessment.end_date > current_time).all()
+    if is_ended:
+        assessment = assessment_query.filter(
+            models.Assessment.end_date < current_time).all()
     else:
         assessment = assessment_query.all()
     return assessment
