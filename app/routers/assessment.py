@@ -66,7 +66,7 @@ def update_assessment(updated_assessment: schemas.Assessment, id: int, db: Sessi
     return assessment_query.first()
 
 
-@router.put("/{id}/activate", response_model=schemas.AssessmentReview)
+@router.put("/{id}/activate", status_code=status.HTTP_201_CREATED)
 def update_assessment(id: int, db: Session = Depends(get_db),
                       user: schemas.TokenUser = Depends(oauth2.get_current_user)):
     instructor = db.query(models.Assessment).join(
@@ -90,8 +90,7 @@ def update_assessment(id: int, db: Session = Depends(get_db),
     assessment_query.update({"is_active": True},
                             synchronize_session=False)
     db.commit()
-    db.refresh(assessment_query.first())
-    return assessment_query.first()
+    return
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
