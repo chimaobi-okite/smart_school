@@ -20,8 +20,8 @@ def query(payload):
 
 
 def score_mapping(score: float):
-    if score > 0.6:
+    if score >= 0.7:
         return 1
-    if score >= 0.4 and score <= 0.6:
+    if score >= 0.4 and score < 0.7:
         return 0.5
     return 0

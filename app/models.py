@@ -74,11 +74,12 @@ class Assessment(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     start_date = Column(DateTime, nullable=False)
-    end_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=False)
     duration = Column(Integer, nullable=False)
     total_mark = Column(Integer, nullable=False)
     assessment_type = Column(String, nullable=True)
     is_active = Column(Boolean, server_default="FALSE", nullable=False)
+    is_marked = Column(Boolean, server_default="FALSE", nullable=False)
     course_id = Column(String, ForeignKey(
         "courses.course_code", ondelete="CASCADE"), nullable=False)
 
@@ -112,6 +113,7 @@ class Question(Base):
     # __table_args__ = (CheckConstraint(
     #     question_type.in_(['obj', 'sub_obj', 'nlp', 'maths'])), )
     answers = relationship("Option", backref="question")
+    submissions = relationship("Submission", backref="question")
 
 
 class Option(Base):

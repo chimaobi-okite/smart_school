@@ -312,6 +312,8 @@ def mark_assessment(id: int, db: Session = Depends(get_db),
     try:
         db.add_all(stu_scores)
         db.add_all(stu_totals)
+        assessment_query.update({"is_marked": True, "is_active": False},
+                                synchronize_session=False)
         db.commit()
     except exc.IntegrityError as e:
         pass

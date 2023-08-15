@@ -108,9 +108,10 @@ class Assessment(BaseModel):
     duration: int
     total_mark: int
     course_id: str
-    is_active: bool
+    is_active: bool = False
+    is_marked: bool = False
     assessment_type: Literal['Assignment', 'Test', 'Exam']
-    end_date: Optional[datetime] = None
+    end_date: datetime
 
     # @validator('start_date')
     # def check_start(cls, v):
@@ -214,10 +215,27 @@ class QuestionAnswer(QuestionOut):
     answers: Optional[List[OptionOut]] = None
 
 
+class StuAnswer(BaseModel):
+    stu_answer: str = None
+    stu_answer_id: int = None
+
+
+class ReviewQuestionAnswer(QuestionOut):
+    answers: Optional[List[OptionOut]] = None
+    stu_answers: StuAnswer
+
+
 class AssessmentReview(Assessment):
     id: int
     questions: Optional[List[QuestionAnswer]] = None
     instructions: Optional[List[InstructionOut]] = None
+
+
+class StuAssessmentReview(Assessment):
+    id: int
+    questions: Optional[List[ReviewQuestionAnswer]] = None
+    instructions: Optional[List[InstructionOut]] = None
+    total: float
 
     class Config:
         orm_mode = True

@@ -66,6 +66,34 @@ def update_assessment(updated_assessment: schemas.Assessment, id: int, db: Sessi
     return assessment_query.first()
 
 
+@router.put("/{id}/activate", response_model=schemas.AssessmentReview)
+def update_assessment(id: int, db: Session = Depends(get_db),
+                      user: schemas.TokenUser = Depends(oauth2.get_current_user)):
+    instructor = db.query(models.Assessment).join(
+        models.CourseInstructor, models.CourseInstructor.course_code == models.Assessment.course_id
+    ).filter(models.CourseInstructor.is_accepted == True,
+             models.CourseInstructor.instructor_id == user.id, models.Assessment.id == id).first()
+
+    if not instructor:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Access denied")
+    assessment_query = db.query(models.Assessment).filter(
+        models.Assessment.id == id)
+    assessment_detail = assessment_query.first()
+    if not assessment_detail:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"assessment with id -> {id} not found")
+    current_time = datetime.now()
+    if assessment_detail.start_date < (current_time):
+        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+                            detail="cannot update already started, ended assessment 15 minutes before start time")
+    assessment_query.update({"is_active": "true"},
+                            synchronize_session=False)
+    db.commit()
+    db.refresh(assessment_query.first())
+    return assessment_query.first()
+
+
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_assessment(id: int, db: Session = Depends(get_db),
                       user: schemas.TokenUser = Depends(oauth2.get_current_user)):
@@ -127,8 +155,8 @@ def review_assessment(id: int, db: Session = Depends(get_db),
 
 
 @router.get("/{id}/assessment_questions", response_model=schemas.AssessmentReview)
-def review_assessment(id: int, db: Session = Depends(get_db),
-                      user: schemas.TokenUser = Depends(oauth2.get_current_user)):
+def get_assessment_questions(id: int, db: Session = Depends(get_db),
+                             user: schemas.TokenUser = Depends(oauth2.get_current_user)):
     assessment_query = db.query(models.Assessment).filter(
         models.Assessment.id == id)
     assessment_detail = assessment_query.first()
@@ -148,14 +176,16 @@ def review_assessment(id: int, db: Session = Depends(get_db),
         ).filter(models.Enrollment.reg_num == user.id, models.Assessment.id == id).first()
         if not student:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-        # # only review after some hours
+        # # only view question in period of exam
         current_time = datetime.now()
-
-        # end_time = assessment_detail.duration + assessment_detail.start_date
-        # if (assessment_detail.start_date < current_time) or (end_time < current_time):
-        #     raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
-        #                         detail="can only create an assignment to start at a time 1 hour ahead of {current_time}")
-
+        if (assessment_detail.end_date < current_time) or (assessment_detail.start_date > current_time):
+            raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+                                detail="test has either ended or not started at this time:{current_time}")
+        submission = db.query(models.Submission).filter(models.Submission
+                                                        .assessment_id == id, models.Submission.student_id == user.id).first()
+        if submission:
+            raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+                                detail="Your submission for this assessment has been recorded")
     assessment = db.query(models.Assessment).options(
         joinedload(models.Assessment.instructions)).options(
         joinedload(models.Assessment.questions)).options(
@@ -256,3 +286,57 @@ def get_assessment_results(id: int, db: Session = Depends(get_db),
     )
     print(total)
     return total
+
+
+@router.get("/{id}/stu_results", response_model=schemas.StuAssessmentReview)
+def get_assessment_results(id: int, db: Session = Depends(get_db),
+                           user: schemas.TokenUser = Depends(oauth2.get_current_user)):
+    if user.is_instructor:
+        instructor = db.query(models.Assessment).join(
+            models.CourseInstructor, models.Assessment.course_id == models.CourseInstructor.course_code
+        ).filter(models.CourseInstructor.instructor_id == user.id, models.Assessment.id == id,
+                 models.CourseInstructor.is_accepted == True).first()
+        if not instructor:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    if not user.is_instructor:
+        student = db.query(models.Assessment).join(
+            models.Enrollment, models.Assessment.course_id == models.Enrollment.course_code
+        ).filter(models.Enrollment.reg_num == user.id, models.Assessment.id == id).first()
+        if not student:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+    # total = db.query(models.Enrollment.reg_num, models.Total.total, models.Student.name,
+    #                  models.Student.photo_url).join(
+    #     models.Total, models.Enrollment.reg_num == models.Total.student_id).join(models.Student,
+    #                                                                               models.Total.student_id == models.Student.id).filter(
+    #     models.Total.assessment_id == id, models.Total.student_id == user.id
+    # ).all()
+    total = db.query(models.Total).filter(models.Total.assessment_id == id,
+                                          models.Total.student_id == user.id).first()
+    submissions = db.query(models.Submission).filter(models.Submission.assessment_id == id,
+                                                     models.Submission.student_id == user.id).all()
+    assessment = db.query(models.Assessment).options(
+        joinedload(models.Assessment.instructions)).options(
+        joinedload(models.Assessment.questions)).options(
+        joinedload(models.Assessment.questions, models.Question.answers)).filter(
+        models.Assessment.id == id).first()
+    total_dict = jsonable_encoder(total)
+    submissions_dict = jsonable_encoder(submissions)
+    assessment_dict = jsonable_encoder(assessment)
+    # # print(submissions_dict)
+    # print(total_dict)
+    # # print(submissions_dict)
+    for i, question in enumerate(assessment_dict['questions']):
+        answer_dic = {"stu_answer": 0, "stu_answer_id": 0}
+        for sub in submissions_dict:
+            if sub['question_id'] == question['id']:
+                if not question['question_type'] == 'obj':
+                    answer_dic['stu_answer'] = sub['stu_answer']
+                else:
+                    answer_dic['stu_answer_id'] = sub['stu_answer_id']
+                assessment_dict['questions'][i]['stu_answers'] = answer_dic
+    assessment_dict['total'] = total_dict['total']
+    return assessment_dict
+
+    # print(total)
+    # return total
