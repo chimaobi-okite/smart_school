@@ -178,9 +178,9 @@ def get_assessment_questions(id: int, db: Session = Depends(get_db),
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
         # # only view question in period of exam
         current_time = datetime.now()
-        if (assessment_detail.end_date < current_time) or (assessment_detail.start_date > current_time):
+        if (current_time <= assessment_detail.end_date) or (current_time > assessment_detail.start_date):
             raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
-                                detail="test has either ended or not started at this time:{current_time}")
+                                detail=f"test has either ended or not started at this time:{current_time}")
         submission = db.query(models.Submission).filter(models.Submission
                                                         .assessment_id == id, models.Submission.student_id == user.id).first()
         if submission:
