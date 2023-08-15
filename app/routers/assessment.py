@@ -151,7 +151,8 @@ def review_assessment(id: int, db: Session = Depends(get_db),
         joinedload(models.Assessment.questions, models.Question.answers)).filter(
         models.Assessment.id == id).first()
     print(assessment)
-    return assessment
+    assessment_dict = jsonable_encoder(assessment)
+    return assessment_dict
 
 
 @router.get("/{id}/assessment_questions", response_model=schemas.AssessmentReview)
