@@ -87,7 +87,7 @@ def update_assessment(id: int, db: Session = Depends(get_db),
     if assessment_detail.start_date < (current_time):
         raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
                             detail="cannot update already started, ended assessment 15 minutes before start time")
-    assessment_query.update({"is_active": "true"},
+    assessment_query.update({"is_active": True},
                             synchronize_session=False)
     db.commit()
     db.refresh(assessment_query.first())
