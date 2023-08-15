@@ -1,6 +1,7 @@
 import os
 import cloudinary.uploader
 from fastapi import FastAPI, File, Response, UploadFile, status, HTTPException, Depends, APIRouter
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -94,12 +95,13 @@ def get_user(user=Depends(oauth2.get_current_user), db: Session = Depends(get_db
     user_ = db.query(models.Instructor).filter(
         models.Instructor.id == user.id).first()
     if not user_:
-        user = db.query(models.Student).filter(
+        user_ = db.query(models.Student).filter(
             models.Student.id == user.id).first()
     if not user_:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"User with id: {id} does not exist")
-
+    user_ = jsonable_encoder(user_)
+    user_['is_instructor'] = user.is_instructor
     return user_
 
 
