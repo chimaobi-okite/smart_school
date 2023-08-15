@@ -89,9 +89,18 @@ def update_password(id: int, user_data: schemas.UserPassword,  db: Session = Dep
     return user_query.first()
 
 
-@router.get('/')
-def get_user(user=Depends(oauth2.get_current_user)):
-    return user
+@router.get('/', response_model=schemas.UserOut)
+def get_user(user=Depends(oauth2.get_current_user), db: Session = Depends(get_db), ):
+    user_ = db.query(models.Instructor).filter(
+        models.Instructor.id == user.id).first()
+    if not user_:
+        user = db.query(models.Student).filter(
+            models.Student.id == user.id).first()
+    if not user_:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"User with id: {id} does not exist")
+
+    return user_
 
 
 @router.put("/{id}/photo", response_model=schemas.UserOut)

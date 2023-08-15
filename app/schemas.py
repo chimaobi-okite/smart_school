@@ -57,6 +57,7 @@ class UserPassword(BaseModel):
 
 class UserOut(User):
     id: int
+    is_instructor: Optional[bool] = None
     photo_url: Optional[str]
 
     class Config:
