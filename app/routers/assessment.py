@@ -283,7 +283,7 @@ def get_assessment_results(id: int, db: Session = Depends(get_db),
         models.Total, models.Enrollment.reg_num == models.Total.student_id,).join(models.Student,
                                                                                   models.Total.student_id == models.Student.id).filter(
         models.Total.assessment_id == id
-    )
+    ).all()
     print(total)
     return total
 
@@ -337,6 +337,3 @@ def get_assessment_results(id: int, db: Session = Depends(get_db),
                 assessment_dict['questions'][i]['stu_answers'] = answer_dic
     assessment_dict['total'] = total_dict['total']
     return assessment_dict
-
-    # print(total)
-    # return total
