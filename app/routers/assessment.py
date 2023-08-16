@@ -143,7 +143,6 @@ def review_assessment(id: int, db: Session = Depends(get_db),
         if review_after < current_time:
             raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
                                 detail="can only create an assignment to start at a time 1 hour ahead of {current_time}")
-
     assessment = db.query(models.Assessment).options(
         joinedload(models.Assessment.instructions)).options(
         joinedload(models.Assessment.questions)).options(
@@ -181,12 +180,12 @@ def get_assessment_questions(id: int, db: Session = Depends(get_db),
         # if not ((current_time <= assessment_detail.end_date) and (current_time > assessment_detail.start_date)):
         #     raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
         #                         detail=f"test has either ended or not started at this time:{current_time}")
-        if assessment_detail.start_date > current_time:
-            raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
-                                detail=f"test is yet to start")
-        if current_time > assessment_detail.end_date:
-            raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
-                                detail=f"test is has ended")
+        # if assessment_detail.start_date > current_time:
+        #     raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+        #                         detail=f"test is yet to start")
+        # if current_time > assessment_detail.end_date:
+        #     raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+        #                         detail=f"test is has ended")
         submission = db.query(models.Submission).filter(models.Submission
                                                         .assessment_id == id, models.Submission.student_id == user.id).first()
         if submission:
