@@ -163,7 +163,7 @@ def get_all_assessment(code: str, is_active: bool = None, is_marked: bool = None
     current_time = datetime.now()
     if is_active != None:
         assessment = assessment_query.filter(
-            models.Assessment.is_active == is_active, models.Assessment.start_time < current_time).all()
+            models.Assessment.is_active == is_active, models.Assessment.end_date < current_time).all()
     if is_marked == True:
         assessment = assessment_query.filter(
             models.Assessment.is_marked == True).all()
