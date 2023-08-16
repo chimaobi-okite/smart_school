@@ -262,7 +262,7 @@ def get_assessment(id: int, db: Session = Depends(get_db),
 
 
 @router.get("/{id}/results", response_model=List[schemas.AssessmentResults])
-def get_assessment_results(id: int, db: Session = Depends(get_db),
+def get_assessment_results(id: int, name: Optional[str] = None, db: Session = Depends(get_db),
                            user: schemas.TokenUser = Depends(oauth2.get_current_user)):
     if user.is_instructor:
         instructor = db.query(models.Assessment).join(
@@ -278,14 +278,16 @@ def get_assessment_results(id: int, db: Session = Depends(get_db),
         if not student:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    total = db.query(models.Enrollment.reg_num, models.Total.total, models.Student.name,
-                     models.Student.photo_url).join(
+    total_query = db.query(models.Enrollment.reg_num, models.Total.total, models.Student.name,
+                           models.Student.photo_url).join(
         models.Total, models.Enrollment.reg_num == models.Total.student_id,).join(models.Student,
                                                                                   models.Total.student_id == models.Student.id).filter(
         models.Total.assessment_id == id
-    ).all()
-    print(total)
-    return total
+    ).order_by(models.Total.total.desc())
+    if name != None:
+        total_query = total_query.filter(
+            models.Student.name.contains(name))
+    return total_query.all()
 
 
 @router.get("/{id}/stu_results", response_model=schemas.StuAssessmentReview)
