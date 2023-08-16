@@ -181,7 +181,7 @@ def get_assessment_questions(id: int, db: Session = Depends(get_db),
         # if not ((current_time <= assessment_detail.end_date) and (current_time > assessment_detail.start_date)):
         #     raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
         #                         detail=f"test has either ended or not started at this time:{current_time}")
-        if assessment_detail.start_date > current_time:
+        if assessment_detail.start_date < current_time:
             raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
                                 detail=f"test is yet to start")
         if current_time > assessment_detail.end_date:
