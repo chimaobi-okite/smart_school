@@ -224,6 +224,7 @@ class StuAnswer(BaseModel):
 class ReviewQuestionAnswer(QuestionOut):
     answers: Optional[List[OptionOut]] = None
     stu_answers: StuAnswer
+    stu_mark: float
 
 
 class AssessmentReview(Assessment):

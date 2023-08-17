@@ -322,6 +322,8 @@ def get_assessment_results(id: int, db: Session = Depends(get_db),
                                           models.Total.student_id == user.id).first()
     submissions = db.query(models.Submission).filter(models.Submission.assessment_id == id,
                                                      models.Submission.student_id == user.id).all()
+    scores = db.query(models.Score).filter(models.Score.assessment_id == id,
+                                           models.Score.student_id == user.id).all()
     assessment = db.query(models.Assessment).options(
         joinedload(models.Assessment.instructions)).options(
         joinedload(models.Assessment.questions)).options(
@@ -329,10 +331,11 @@ def get_assessment_results(id: int, db: Session = Depends(get_db),
         models.Assessment.id == id).first()
     total_dict = jsonable_encoder(total)
     submissions_dict = jsonable_encoder(submissions)
+    score_dict = jsonable_encoder(scores)
     assessment_dict = jsonable_encoder(assessment)
     # # print(submissions_dict)
-    # print(total_dict)
-    # # print(submissions_dict)
+    print(score_dict)
+    print(submissions_dict)
     for i, question in enumerate(assessment_dict['questions']):
         answer_dic = {"stu_answer": 0, "stu_answer_id": 0}
         for sub in submissions_dict:
@@ -342,5 +345,8 @@ def get_assessment_results(id: int, db: Session = Depends(get_db),
                 else:
                     answer_dic['stu_answer_id'] = sub['stu_answer_id']
                 assessment_dict['questions'][i]['stu_answers'] = answer_dic
+        for score in score_dict:
+            if score['question_id'] == question['id']:
+                assessment_dict['questions'][i]['stu_mark'] = score['score']
     assessment_dict['total'] = total_dict['total']
     return assessment_dict
