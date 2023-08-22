@@ -122,4 +122,4 @@ Below are sample screens from the actual web app.
     You can also access the auto-generated docs by visiting http://localhost:8000/docs.
 
 ## Final Notes
-Want to read the full paper/project :)..... Drop me a mail @ okitesamuel28@gmail.com
+Want to read the full paper/project :)..... Drop me a mail @ okitesamuel28@gmail.com or Email Chukwuma @ Chukwuma.c.kingsley@gmail.com
