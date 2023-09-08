@@ -1,20 +1,48 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware import Middleware
+
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import cloudinary.uploader
+
+from app import config
 
 from . import models
 from .database import engine
-from .routers import course, user, auth, student,instructor, assessment, question, answer, submission, instruction,mark
+from .routers import course, user, auth, student, instructor, assessment, question, answer, submission, instruction, mark
 # from .config import settings
 
 
 # models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://futo-academia.vercel.app",
+]
 
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=['*'],
+        allow_headers=['*']
+    )
+]
 
+app = FastAPI(middleware=middleware)
+
+cloudinary.config(
+    cloud_name=config.settings.cloud_api_name,
+    api_key=config.settings.cloud_api_key,
+    api_secret=config.settings.cloud_api_secret
+)
 
 app.include_router(course.router)
 app.include_router(user.router)

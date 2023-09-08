@@ -1,0 +1,15 @@
+﻿S/N,Questions,ref_answers,stud_answers
+1,What is parallel processing?,Parallel computing is a type of computation in which many calculations or processes are carried out simultaneously.,Parallel processing refers to the use of a single processor to execute multiple tasks at the same time. It involves splitting tasks into smaller parts and processing them one after another to achieve faster results.
+2,What is the difference between depletion type and enhancement type MOS?,"An enhancement MOSFET is by definition “off” when there is no gate voltage, or when VGS is 0. In contrast, a depletion mode MOSFET is “on” when there is no gate voltage, it is naturally in a conducting state.","Depletion-type MOS transistors are normally ON without a gate voltage, acting as voltage-controlled resistors. Enhancement-type MOS transistors are normally OFF without a gate voltage and function as voltage-controlled switches, turning ON when a sufficient gate voltage is applied, or when there is no capacitance."
+3,Explain the process of Electromigration.,Electromigration is the transport of material caused by the gradual movement of the ions in a conductor due to the momentum transfer between conducting electrons and diffusing metal atoms.,"Electromigration is the process by which electrons migrate within a solid material due to a high electric field, leading to the degradation of electronic components over time."
+4,Differentiate between reapeatability and reproducibliity.,"repeatability measures the variation in measurements taken by a single instrument or person under the same conditions, while reproducibility measures whether an entire study or experiment can be reproduced in its entirety.","Reproducibility determines whether an entire research or experiment can be replicated, whereas repeatability assesses the variance in measurements made by a single instrument or person under the same circumstances."
+5,Explain the FMEA and how it differs from FMECA,"FMEA (Failure Modes and Effects Analysis) is a method to identify potential failures and their consequences, while FMECA (Failure Modes, Effects, and Criticality Analysis) adds criticality assessment to evaluate the broader impact of failures on system performance, safety, and functionality.","The criticality analysis aspect of FMECA is performed post-FMEA. Where FMEA only offers qualitative information, FMECA offers both qualitative and quantitative information, allowing users to measure a level of criticality to failure modes and order them according to importance."
+6,,,
+7,,,
+8,,,
+9,,,
+10,,,
+11,,,
+12,,,
+13,,,
+14,,,
