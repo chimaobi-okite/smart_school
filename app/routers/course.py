@@ -172,7 +172,7 @@ def get_all_assessment(code: str, is_active: bool = None, is_marked: bool = None
 
     return assessment
 
-@router.get("/{code}/assessment", response_model=List[schemas.AssessmentOut])
+@router.get("/{code}/my_assessments", response_model=List[schemas.AssessmentOut])
 def get_instructor_assessments(code: str, is_active: bool = None, is_marked: bool = None, db: Session = Depends(get_db),
                        user: schemas.TokenUser = Depends(oauth2.get_current_user)):
     
