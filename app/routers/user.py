@@ -61,9 +61,9 @@ def update_user(id: int, user_data: schemas.User,  db: Session = Depends(get_db)
         user_query = db.query(models.Student).filter(models.Student.id == id)
         if not user_query.first():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                detail=f"User with id: {id} does not exist")
+                                detail=f"User with id: {id} does not exist.")
     if user_query.first().id != user_token.id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized to perform this action.")
     user_query.update(user_data.dict(), synchronize_session=False)
     db.commit()
     return user_query.first()
