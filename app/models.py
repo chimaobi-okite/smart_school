@@ -47,7 +47,7 @@ class Course(Base):
     course_photo_url = Column(String, nullable=True)
     creator_id = Column(Integer, ForeignKey("instructors.id", ondelete="NO ACTION"), nullable=False)
 
-    instructor = relationship("Instructors", backref="course")
+    instructor = relationship("Instructor", backref="course")
 
 class Enrollment(Base):
     __tablename__ = "enrollments"
