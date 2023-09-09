@@ -52,7 +52,7 @@ async def upload_photo(code: str, file: UploadFile = File(...),
 
     if not instructor:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Access denied")
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized action.")
     course_query = db.query(models.Course).filter(
         models.Course.course_code == code)
     response = cloudinary.uploader.upload(file.file)
@@ -73,7 +73,7 @@ def update_course(code: str, new_course: schemas.Course,
 
     if not instructor:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Access denied")
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized action.")
     course_query = db.query(models.Course).filter(
         models.Course.course_code == code)
     course_query.update(new_course.dict(), synchronize_session=False)
@@ -152,12 +152,12 @@ def get_all_assessment(code: str, is_active: bool = None, is_marked: bool = None
             models.CourseInstructor.instructor_id == user.id,
             models.CourseInstructor.is_coordinator == True).first()
         if not instructor:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized action.")
     if not user.is_instructor:
         student = db.query(models.Enrollment).filter(
             models.Enrollment.reg_num == user.id, models.Enrollment.course_code == code).first()
         if not student:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized action.")
     assessment_query = db.query(models.Assessment).filter(
         models.Assessment.course_id == code)
     current_time = datetime.now()
@@ -169,8 +169,27 @@ def get_all_assessment(code: str, is_active: bool = None, is_marked: bool = None
             models.Assessment.is_marked == True).all()
     else:
         assessment = assessment_query.all()
+
     return assessment
 
+@router.get("/{code}/assessment", response_model=List[schemas.AssessmentOut])
+def get_instructor_assessments(code: str, is_active: bool = None, is_marked: bool = None, db: Session = Depends(get_db),
+                       user: schemas.TokenUser = Depends(oauth2.get_current_user)):
+    
+    if not user.is_instructor:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized action.")
+    
+    assessment_query = db.query(models.Assessment).filter(models.Assessment.course_id == code, models.Assessment.creator_id == user.id)
+    current_time = datetime.now()
+    if is_active != None:
+        assessment = assessment_query.filter(models.Assessment.is_active == is_active, models.Assessment.end_date < current_time).all()
+    if is_marked == True:
+        assessment = assessment_query.filter(models.Assessment.is_marked == True).all()
+    else:
+        assessment = assessment_query.all()
+
+    return assessment
+    
 
 @router.delete("/{code}", status_code=204)
 def delete_courses(code: str, db: Session = Depends(get_db), user: schemas.TokenUser = Depends(oauth2.get_current_user)):
@@ -181,7 +200,7 @@ def delete_courses(code: str, db: Session = Depends(get_db), user: schemas.Token
 
     if not instructor:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Access denied")
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized action.")
     photo_path = os.path.join(config.PHOTO_DIR, "courses", code)
     if os.path.exists(photo_path):
         os.remove(photo_path)
