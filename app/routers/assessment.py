@@ -30,7 +30,7 @@ def create_assessment(assessment: schemas.Assessment, db: Session = Depends(get_
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Access denied")
 
     # only create assessment two hours into the future
-    new_assessment = models.Assessment(**assessment.dict())
+    new_assessment = models.Assessment(**assessment.dict(), creator_id = user.id)
     db.add(new_assessment)
     db.commit()
     db.refresh(new_assessment)

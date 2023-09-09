@@ -30,7 +30,7 @@ def create_course(course: schemas.Course, db: Session = Depends(get_db),
     if exists:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail=f"course with code {course.course_code} already exists")
-    new_course = models.Course(**course.dict())
+    new_course = models.Course(**course.dict(), creator_id = user.id)
 
     instructor = schemas.EnrollInstructor(course_code=course.course_code,
                                           instructor_id=user.id, is_coordinator=True, is_accepted=True)
@@ -98,6 +98,23 @@ def get_courses(db: Session = Depends(get_db),
     courses_query.limit(limit).offset(skip*limit)
     return courses_query.all()
 
+#This route returns only the courses created by a particular instructor.
+@router.get("/my_courses", response_model=List[schemas.CourseOut])
+def get_courses(db: Session = Depends(get_db),
+                user: schemas.TokenUser = Depends(oauth2.get_current_user), semester: int = 1,
+                title: Optional[str] = None, faculty: Optional[str] = None, level: Optional[int] = None,
+                skip: int = 0, limit: int = 10):
+    courses_query = db.query(models.Course).filter(
+        models.Course.semester == semester, models.Course.creator_id == user.id)
+    if title:
+        courses_query = courses_query.filter(
+            models.Course.title.contains(title))
+    if faculty:
+        courses_query = courses_query.filter(models.Course.faculty == faculty)
+    if level:
+        courses_query = courses_query.filter(models.Course.level == level)
+    courses_query.limit(limit).offset(skip*limit)
+    return courses_query.all()
 
 @router.get("/enrollments", response_model=List[schemas.CourseOut])
 def get_enrollments(db: Session = Depends(get_db),
