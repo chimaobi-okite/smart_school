@@ -156,7 +156,7 @@ def get_courses(code: str, db: Session = Depends(get_db), user: schemas.TokenUse
         models.Course.course_code == code).first()
     if not course:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail=f"course with code {code} already exists")
+                            detail=f"course with code {code} does not exists!")
     return course
 
 
