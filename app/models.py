@@ -45,7 +45,9 @@ class Course(Base):
     semester = Column(Integer, nullable=False)
     level = Column(Integer, nullable=False)
     course_photo_url = Column(String, nullable=True)
+    creator_id = Column(Integer, ForeignKey("instructors.id", ondelete="NO ACTION"), nullable=False)
 
+    instructor = relationship("Instructor", backref="course")
 
 class Enrollment(Base):
     __tablename__ = "enrollments"
@@ -82,10 +84,12 @@ class Assessment(Base):
     is_marked = Column(Boolean, server_default="FALSE", nullable=False)
     course_id = Column(String, ForeignKey(
         "courses.course_code", ondelete="CASCADE"), nullable=False)
+    creator_id = Column(Integer, ForeignKey("instructors.id", ondelete="NO ACTION"), nullable=False)
 
     questions = relationship("Question", backref="assessment")
     instructions = relationship("Instruction", backref="assessment")
     totals = relationship("Total", backref="assessment")
+    instructor = relationship("Instructor", backref="assessment")
 
 
 class Instruction(Base):

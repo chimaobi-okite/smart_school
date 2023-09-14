@@ -36,7 +36,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         db.refresh(new_user)
     except exc.IntegrityError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail="user with email already exists")
+                            detail="Email or registration number already in use!")
 
     return new_user
 
@@ -61,9 +61,9 @@ def update_user(id: int, user_data: schemas.User,  db: Session = Depends(get_db)
         user_query = db.query(models.Student).filter(models.Student.id == id)
         if not user_query.first():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                detail=f"User with id: {id} does not exist")
+                                detail=f"User with id: {id} does not exist.")
     if user_query.first().id != user_token.id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized to perform this action.")
     user_query.update(user_data.dict(), synchronize_session=False)
     db.commit()
     return user_query.first()
@@ -89,20 +89,20 @@ def update_password(id: int, user_data: schemas.UserPassword,  db: Session = Dep
     db.commit()
     return user_query.first()
 
-
+#What is the function of this code block? There's already a get_user function above
 @router.get('/', response_model=schemas.UserOut)
-def get_user(user=Depends(oauth2.get_current_user), db: Session = Depends(get_db), ):
-    user_ = db.query(models.Instructor).filter(
-        models.Instructor.id == user.id).first()
-    if not user_:
-        user_ = db.query(models.Student).filter(
-            models.Student.id == user.id).first()
-    if not user_:
+def get_user(current_user=Depends(oauth2.get_current_user), db: Session = Depends(get_db), ):
+    user = db.query(models.Instructor).filter(
+        models.Instructor.id == current_user.id).first()
+    if not user:
+        user = db.query(models.Student).filter(
+            models.Student.id == current_user.id).first()
+    if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"User with id: {id} does not exist")
-    user_ = jsonable_encoder(user_)
-    user_['is_instructor'] = user.is_instructor
-    return user_
+    user = jsonable_encoder(user)
+    user['is_instructor'] = current_user.is_instructor
+    return user
 
 
 @router.put("/{id}/photo", response_model=schemas.UserOut)
